@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - Sistema PDV{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'core/css/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h2>Login no Sistema PDV</h2>
+    <div class="login-form-group">
+        <label for="username">Usuário:</label>
+        <input type="text" id="username" placeholder="Digite seu usuário" required>
+    </div>
+    <div class="login-form-group">
+        <label for="password">Senha:</label>
+        <input type="password" id="password" placeholder="Digite sua senha" required>
+    </div>
+    <button id="login-button" class="login-button">Entrar</button>
+    <p id="login-message" class="message"></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'core/js/login.js' %}"></script>
+{% endblock %}

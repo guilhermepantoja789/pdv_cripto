@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema PDV Cripto{% endblock %}</title>
+
+    {# Carrega os arquivos CSS globais #}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    {# Bloco para CSS específico de cada página #}
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {# Conteúdo principal da página #}
+    <div id="wrapper">
+        {% block content %}{% endblock %}
+    </div>
+
+    {# Carrega os arquivos JS globais #}
+    <script src="{% static 'js/base.js' %}"></script>
+
+    {# Bloco para JS específico de cada página #}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

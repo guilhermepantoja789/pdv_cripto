@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estoque - Sistema PDV{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'estoque/css/estoque.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="estoque-container">
+    <header class="estoque-header">
+        <h1>Gestão de Estoque</h1>
+        <div class="header-controls">
+            <input type="text" id="search-input" placeholder="Buscar por nome ou código..." class="form-control">
+            <select id="status-filter-select" class="form-control">
+                <option value="todos">Todos os Produtos</option>
+                <option value="ativo">Ativos</option>
+                <option value="inativo">Inativos</option>
+                <option value="baixo_estoque">Estoque Baixo</option>
+            </select>
+            <button id="btn-refresh-stock" class="action-button">Atualizar</button>
+            <a href="{% url 'pdv' %}" class="action-button secondary">Voltar ao PDV</a>
+        </div>
+    </header>
+
+    <div class="estoque-table-container">
+        <table class="estoque-table">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nome</th>
+                    <th>Preço Venda</th>
+                    <th>Estoque</th>
+                    <th>Mínimo</th>
+                    <th>Unid.</th>
+                    <th>Ativo</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="estoque-table-body">
+                <tr><td colspan="9" class="text-center">Carregando produtos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    {# Modal para Ajuste de Estoque #}
+    <div id="stock-adjustment-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button adjustment-close-button">&times;</span>
+            <h2>Ajustar Estoque: <span id="adjustment-product-name"></span></h2>
+            <p>Produto: <strong id="adjustment-product-info"></strong></p>
+            <p>Estoque Atual: <strong id="adjustment-current-stock"></strong></p>
+
+            <div class="modal-form-group">
+                <label for="adjustment-type">Tipo de Ajuste:</label>
+                <select id="adjustment-type" class="form-control">
+                    <option value="ENTRADA">Entrada de Estoque</option>
+                    <option value="SAIDA">Saída Manual</option>
+                    <option value="AJUSTE">Ajuste de Inventário</option>
+                </select>
+            </div>
+            <div class="modal-form-group">
+                <label for="adjustment-quantity">Quantidade:</label>
+                <input type="number" id="adjustment-quantity" step="0.001" min="0.001" value="1.000" class="form-control">
+            </div>
+            <div class="modal-form-group">
+                <label for="adjustment-observation">Observação:</label>
+                <textarea id="adjustment-observation" rows="3" class="form-control"></textarea>
+            </div>
+            <p id="adjustment-message" class="modal-error-text"></p>
+            <button id="adjustment-confirm-button" class="action-button">Confirmar Ajuste</button>
+            <button id="adjustment-cancel-button" class="action-button secondary">Cancelar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // URLs do Django passadas para o JavaScript
+        const DJANGO_URLS = {
+            estoqueListar: "{% url 'api_estoque_listar' %}",
+            estoqueAjustar: "{% url 'api_estoque_ajustar' %}",
+            // Adicione outras URLs se necessário
+        };
+    </script>
+    <script src="{% static 'estoque/js/estoque.js' %}"></script>
+{% endblock %}

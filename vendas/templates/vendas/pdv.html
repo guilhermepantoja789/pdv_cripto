@@ -1,0 +1,248 @@
+{% extends 'base.html' %} {# Este template herda de nosso template base #}
+
+{% block title %}PDV - {{ block.super }}{% endblock %} {# Define o título da página #}
+
+{% load static %} {% block extra_css %}
+    {# CSS específico para a tela do PDV #}
+    <link rel="stylesheet" href="{% static 'vendas/css/pdv.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="pdv-container">
+        <div class="pdv-col-left">
+            <header class="pdv-header">
+                <h1>Sistema de Vendas</h1>
+                <div class="header-info">
+                    <span id="current-sale-id">Venda #0001</span>
+                    <span id="user-info" style="margin-left: 20px;">Usuário: <strong id="logged-in-username">Carregando...</strong></span>
+                    <span id="cashier-status" style="margin-left: 20px;">Caixa: <strong id="current-cashier-status">Fechado</strong></span>
+                    <button id="btn-open-cashier" class="action-button small" style="margin-left: 10px;">Abrir Caixa</button>
+                    <button id="btn-close-cashier" class="action-button secondary small" style="margin-left: 5px; display: none;">Fechar Caixa</button>
+                    <a href="{% url 'estoque_listagem' %}" class="action-button tertiary small" style="margin-left: 5px;">Estoque</a> {# NOVO LINK #}
+                    <button id="btn-logout" class="action-button tertiary small" style="margin-left: 5px;">Sair</button>
+                </div>
+            </header>
+
+            <div class="pdv-product-list">
+                <h2>Itens da Venda</h2>
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qtd</th>
+                            <th>Preço Unit.</th>
+                            <th>Total</th>
+                            <th></th> {# Coluna para remover item #}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {# Os produtos serão adicionados aqui via JS #}
+                        <tr class="placeholder-row">
+                            <td colspan="5" class="text-center">Nenhum produto adicionado ainda.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <footer class="pdv-totals">
+                <div class="total-line">
+                    <span>Subtotal:</span>
+                    <span id="subtotal">R$ 0,00</span>
+                </div>
+                <div class="total-line">
+                    <span>Descontos:</span>
+                    <span id="discounts">R$ 0,00</span>
+                </div>
+                <div class="total-line final-total">
+                    <span>Total da Venda:</span>
+                    <span id="final-total">R$ 0,00</span>
+                </div>
+            </footer>
+        </div>
+
+        <div class="pdv-col-right">
+            <div class="pdv-input-area">
+                <label for="barcode-input">Escanear / Digitar Produto:</label>
+                <input type="text" id="barcode-input" autofocus placeholder="Código de Barras ou Nome do Produto">
+                <p class="help-text">Pressione Enter para adicionar. Foco sempre ativo para scanner.</p>
+            </div>
+
+            <div class="pdv-product-info">
+                {# Aqui pode aparecer info do produto após escanear #}
+                <p id="scanned-product-name"></p>
+                <p id="scanned-product-price"></p>
+            </div>
+
+            <div class="pdv-actions">
+                <button id="btn-finalize-sale" class="action-button">Ctrl+Enter - Finalizar Venda</button>
+                <button id="btn-cancel-sale" class="action-button secondary">Esc - Cancelar Venda</button>
+                <button id="btn-apply-discount" class="action-button">Ctrl+D - Desconto</button>
+                <button id="btn-new-sale" class="action-button success" style="display: none;">Alt+N - Nova Venda</button>
+            </div>
+
+            <div class="pdv-payment-area" style="display: none;"> {# Inicialmente oculto #}
+                <h2>Formas de Pagamento</h2>
+                <div class="payment-options">
+                    <button class="payment-button">1 - Dinheiro</button>
+                    <button class="payment-button">2 - Cartão</button>
+                    <button class="payment-button">3 - PIX</button>
+                    <button class="payment-button">4 - Criptomoedas</button>
+                </div>
+                <div id="payment-details">
+                    <div id="payment-details">
+                         {# Detalhes do PIX/Cripto (QR Code, etc.) aparecerão aqui #}
+                         <div id="qrcode-display" style="margin: 15px auto;"></div> {# NOVO: Elemento onde o QR será desenhado #}
+                     </div>
+                </div>
+                {# Nova linha adicionada abaixo #}
+                <p class="payment-help-text">Pressione Backspace para voltar e adicionar mais produtos.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para entrada de peso/quantidade -->
+    <div id="quantity-input-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Informar Quantidade/Peso</h2>
+            <p id="modal-product-name" class="modal-product-info"></p>
+            <div class="modal-input-group">
+                <input type="text" id="modal-quantity-input" placeholder="Digite a quantidade ou peso" autocomplete="off">
+                <span id="modal-unit-display" class="modal-unit-label"></span>
+            </div>
+            <p id="modal-error-message" class="modal-error-text"></p> {# Mensagem de erro #}
+            <button id="modal-confirm-button" class="action-button">Confirmar (Enter)</button>
+            <button id="modal-cancel-button" class="action-button secondary">Cancelar (Esc)</button>
+        </div>
+    </div>
+
+    <div id="pix-payment-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button pix-close-button">&times;</span> {# Adicionado classe específica para o botão fechar do PIX #}
+            <h2>Pagamento via PIX</h2>
+            <p class="modal-payment-amount">Total a Pagar: <span id="modal-pix-total">R$ 0,00</span></p>
+
+            <div class="pix-qr-section">
+                <p style="font-weight: bold; color: #0056b3;">Escaneie o QR Code:</p>
+                <div id="modal-qrcode-display" style="margin: 15px auto;"></div> {# Onde o QR será desenhado #}
+            </div>
+
+            <div class="pix-copia-cola-section">
+                <p><strong>Código Pix Copia e Cola:</strong></p>
+                <textarea id="modal-pix-copy-paste-code" class="pix-copy-paste-code" readonly></textarea>
+                <button id="modal-copy-pix-button" class="copy-pix-button action-button">Copiar Código (C)</button>
+            </div>
+
+            <p class="pix-transaction-info" style="font-size: 0.9em; color: #777; margin-top: 10px;">ID Transação Efipay: <span id="modal-pix-txid"></span></p>
+            <p id="modal-pix-status" style="color: green; font-weight: bold;">AGUARDANDO PAGAMENTO...</p>
+
+            <div class="modal-pix-actions">
+                <button id="modal-confirm-pix-manually" class="action-button success">Confirmar Pagamento (Enter)</button>
+                <button id="modal-cancel-pix" class="action-button secondary">Cancelar PIX (Esc)</button>
+            </div>
+        </div>
+    </div>
+
+    {# NOVO: Modal para Pagamento Criptomoeda #}
+    <div id="crypto-payment-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button crypto-close-button">&times;</span>
+            <h2>Pagamento via Criptomoeda</h2>
+            <p class="modal-payment-amount">Total a Pagar: <span id="modal-crypto-total">R$ 0,00</span></p>
+            {# Remover a linha abaixo, pois o valor em cripto só aparece depois de gerar o pagamento #}
+            {# <p class="modal-crypto-currency-amount">Valor em <span id="modal-crypto-currency-name"></span>: <span id="modal-crypto-amount"></span></p> #}
+
+            {# Seleção de Criptomoeda e Mínimo Transacionável #}
+            <div class="crypto-selection-area">
+                <label for="crypto-currency-select">Selecione a Criptomoeda:</label>
+                <select id="crypto-currency-select" class="form-control">
+                    <option value="">Carregando criptomoedas...</option>
+                </select>
+                <p class="crypto-min-amount-info">Mín. Transacionável: <span id="modal-crypto-min-brl">Carregando...</span></p>
+                <p id="crypto-selection-error-message" class="modal-error-text"></p> {# Mensagem de erro para seleção #}
+            </div>
+
+            {# NOVO: Botão para Gerar o Pagamento (Visível após seleção, oculta a seção abaixo) #}
+            <button id="btn-generate-crypto-payment" class="action-button success" style="margin-top: 15px;">Gerar Pagamento Cripto (Enter)</button>
+
+            {# Seções abaixo ficarão ocultas até o pagamento ser gerado #}
+            <div id="crypto-payment-details-sections" style="display: none;">
+                <p class="modal-crypto-currency-amount" style="margin-top: 15px;">Valor em <span id="modal-crypto-currency-name"></span>: <span id="modal-crypto-amount"></span></p>
+                <div class="crypto-qr-section">
+                    <p style="font-weight: bold; color: #0056b3;">Escaneie o QR Code:</p>
+                    <div id="modal-crypto-qrcode-display" style="margin: 15px auto;"></div>
+                </div>
+
+                <div class="crypto-address-section">
+                    <p><strong>Endereço da Carteira:</strong></p>
+                    <textarea id="modal-crypto-address" class="pix-copy-paste-code" readonly></textarea>
+                    <button id="modal-copy-crypto-address-button" class="copy-pix-button action-button">Copiar Endereço (A)</button>
+                </div>
+                <p class="crypto-transaction-info" style="font-size: 0.9em; color: #777; margin-top: 10px;">ID Transação NOWPayments: <span id="modal-crypto-txid"></span></p>
+                <p id="modal-crypto-status" style="color: green; font-weight: bold;">AGUARDANDO CONFIRMAÇÃO...</p>
+            </div>
+
+
+            <div class="modal-crypto-actions">
+                <button id="modal-confirm-crypto-manually" class="action-button success" style="display: none;">Confirmar Pagamento (Enter)</button>
+                <button id="modal-cancel-crypto" class="action-button secondary">Cancelar (Esc)</button>
+            </div>
+        </div>
+    </div>
+
+    {# NOVO: Modal para Abrir Caixa #}
+     <div id="open-cashier-modal" class="modal" style="display: none;">
+         <div class="modal-content">
+             <span class="close-button open-cashier-close-button">&times;</span>
+             <h2>Abrir Caixa</h2>
+             <p>Usuário: <strong id="open-cashier-username"></strong></p>
+             <div class="modal-input-group">
+                 <label for="open-cashier-initial-balance">Saldo Inicial (R$):</label>
+                 <input type="number" id="open-cashier-initial-balance" step="0.01" min="0" value="0.00">
+             </div>
+             <p id="open-cashier-message" class="modal-error-text"></p>
+             <button id="open-cashier-confirm-button" class="action-button">Confirmar Abertura (Enter)</button>
+             <button id="open-cashier-cancel-button" class="action-button secondary">Cancelar (Esc)</button>
+         </div>
+     </div>
+
+     {# NOVO: Modal para Fechar Caixa #}
+     <div id="close-cashier-modal" class="modal" style="display: none;">
+         <div class="modal-content">
+             <span class="close-button close-cashier-close-button">&times;</span>
+             <h2>Fechar Caixa</h2>
+             <p>Usuário: <strong id="close-cashier-username"></strong></p>
+             <p>Saldo de Abertura: <strong id="close-cashier-initial-balance-display">R$ 0,00</strong></p>
+             <p>Vendas Registradas: <strong id="close-cashier-sales-total">R$ 0,00</strong></p>
+             <div class="modal-input-group">
+                 <label for="close-cashier-final-balance">Saldo Final Contado (R$):</label>
+                 <input type="number" id="close-cashier-final-balance" step="0.01" min="0" value="0.00">
+             </div>
+             <p id="close-cashier-message" class="modal-error-text"></p>
+             <button id="close-cashier-confirm-button" class="action-button">Confirmar Fechamento (Enter)</button>
+             <button id="close-cashier-cancel-button" class="action-button secondary">Cancelar (Esc)</button>
+         </div>
+     </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        const DJANGO_URLS = {
+            cashierStatus: "{% url 'api_caixa_status' %}",
+            listCryptos: "{% url 'api_listar_criptos' %}",
+            generateCrypto: "{% url 'api_gerar_cripto' %}",
+            consultCryptoStatus: "{% url 'api_consultar_cripto_status' %}",
+            generatePix: "{% url 'api_gerar_pix' %}",
+            consultPixStatus: "{% url 'api_consultar_pix_status' %}",
+            finalizeSale: "{% url 'api_finalizar_venda' %}",
+            loginStatus: "{% url 'api_user_status' %}", // URL para o status do usuário
+            openCashier: "{% url 'api_abrir_caixa' %}",
+            closeCashier: "{% url 'api_fechar_caixa' %}",
+            // Adicione outras URLs aqui conforme necessário
+        };
+    </script>
+    <script src="{% static 'vendas/js/qrcode.min.js' %}"></script>
+    <script src="{% static 'vendas/js/pdv.js' %}"></script>
+    <script src="{% static 'vendas/js/scanner.js' %}"></script> {# JS para o scanner #}
+{% endblock %}

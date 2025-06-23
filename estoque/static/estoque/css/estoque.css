@@ -1,0 +1,204 @@
+/* estoque/static/estoque/css/estoque.css */
+body {
+    background-color: #f0f2f5;
+    color: #333;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.estoque-container {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-width: 1200px;
+    margin: 20px auto;
+    box-sizing: border-box; /* Garante padding incluso na largura */
+}
+
+.estoque-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.estoque-header h1 {
+    margin: 0;
+    font-size: 2em;
+    color: #0056b3;
+}
+
+.header-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-control {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+}
+
+/* Reutiliza estilos de action-button do pdv.css */
+.action-button {
+    padding: 10px 15px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    text-decoration: none; /* Para links com classe button */
+    display: inline-block; /* Para links com classe button */
+    text-align: center;
+}
+
+.action-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.action-button:active {
+    transform: translateY(0);
+}
+
+.action-button.secondary {
+    background-color: #6c757d;
+}
+
+.action-button.secondary:hover {
+    background-color: #5a6268;
+}
+
+.action-button.small {
+    padding: 5px 10px;
+    font-size: 0.8em;
+    min-width: unset;
+}
+
+.action-button.success {
+    background-color: #28a745;
+}
+
+.action-button.success:hover {
+    background-color: #218838;
+}
+
+
+.estoque-table-container {
+    overflow-x: auto; /* Permite scroll horizontal em telas menores */
+}
+
+.estoque-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.estoque-table th, .estoque-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.estoque-table th {
+    background-color: #e9ecef;
+    font-weight: bold;
+    color: #555;
+    white-space: nowrap; /* Impede que o texto do cabeçalho quebre linha */
+}
+
+.estoque-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.estoque-table tbody tr:hover {
+    background-color: #f0f0f0;
+}
+
+.estoque-table .text-center {
+    text-align: center;
+    color: #777;
+    font-style: italic;
+}
+
+/* Status de estoque */
+.status-baixo {
+    color: #dc3545; /* Vermelho */
+    font-weight: bold;
+}
+.status-normal {
+    color: #28a745; /* Verde */
+}
+
+/* Botões de ação na tabela */
+.action-column button {
+    margin: 0 5px;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.action-column button:hover {
+    background-color: #0056b3;
+}
+
+/* Estilos para o Modal de Ajuste de Estoque (reutiliza estilos gerais de modal) */
+#stock-adjustment-modal .modal-content {
+    max-width: 500px;
+    text-align: left;
+}
+
+.modal-form-group {
+    margin-bottom: 15px;
+}
+
+.modal-form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.modal-form-group .form-control {
+    width: calc(100% - 24px); /* Ajusta para padding */
+    padding: 10px;
+    font-size: 1em;
+}
+
+.modal-error-text {
+    color: #dc3545;
+    font-size: 0.9em;
+    margin-top: 10px;
+    margin-bottom: 15px;
+}
+
+#adjustment-product-name {
+    color: #0056b3;
+    font-size: 1.5em;
+    display: block;
+    margin-bottom: 10px;
+}
+#adjustment-product-info, #adjustment-current-stock {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 5px;
+}

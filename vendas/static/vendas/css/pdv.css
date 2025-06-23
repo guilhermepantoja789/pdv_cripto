@@ -1,0 +1,667 @@
+/* Base styles para o container principal do PDV */
+.pdv-container {
+    display: flex; /* Usa Flexbox para o layout de duas colunas */
+    flex-direction: row; /* Colunas lado a lado por padrão */
+    height: 100vh; /* Ocupa 100% da altura da viewport */
+    font-family: Arial, sans-serif; /* Fonte padrão */
+    color: #333; /* Cor de texto padrão */
+    overflow: hidden; /* Evita barras de rolagem desnecessárias no container principal */
+}
+
+/* Coluna Esquerda - Maior foco (Lista de produtos, totais) */
+.pdv-col-left {
+    flex: 2; /* Ocupa 2 partes do espaço disponível (maior) */
+    background-color: #f8f8f8; /* Um cinza bem claro para o fundo */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Sombra sutil na borda para separar visualmente */
+}
+
+.pdv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.pdv-header h1 {
+    margin: 0;
+    font-size: 1.8em;
+    color: #0056b3; /* Cor primária */
+}
+
+#current-sale-id {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #555;
+}
+
+.pdv-product-list {
+    flex-grow: 1; /* Permite que a lista de produtos ocupe o espaço restante */
+    overflow-y: auto; /* Adiciona scroll se a lista for muito grande */
+    margin-bottom: 20px;
+}
+
+.pdv-product-list h2 {
+    font-size: 1.4em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #0056b3;
+}
+
+.product-table {
+    width: 100%;
+    border-collapse: collapse; /* Remove espaçamento entre bordas de células */
+    margin-bottom: 20px;
+}
+
+.product-table th, .product-table td {
+    padding: 10px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.product-table th {
+    background-color: #e9ecef;
+    font-weight: bold;
+    color: #555;
+}
+
+.product-table tbody tr:hover {
+    background-color: #f0f0f0; /* Efeito de hover nas linhas */
+}
+
+.product-table .text-center {
+    text-align: center;
+    color: #777;
+    font-style: italic;
+}
+
+/* Rodapé dos totais */
+.pdv-totals {
+    border-top: 2px solid #0056b3; /* Borda superior para destacar */
+    padding-top: 20px;
+    margin-top: auto; /* Empurra os totais para o fundo da coluna */
+    text-align: right;
+}
+
+.total-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2em;
+    margin-bottom: 8px;
+}
+
+.final-total {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #28a745; /* Cor verde para o total final */
+}
+
+/* Coluna Direita - Controles e Ações */
+.pdv-col-right {
+    flex: 1; /* Ocupa 1 parte do espaço disponível (menor) */
+    background-color: #ffffff; /* Fundo branco */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Espaço entre os blocos */
+}
+
+.pdv-input-area label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+.pdv-input-area input[type="text"] {
+    width: calc(100% - 20px); /* Ajusta a largura para não vazar com padding */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1.1em;
+    outline: none; /* Remove borda de foco padrão */
+}
+
+.pdv-input-area input[type="text"]:focus {
+    border-color: #0056b3; /* Borda azul ao focar */
+    box-shadow: 0 0 5px rgba(0,86,179,0.2);
+}
+
+.pdv-input-area .help-text {
+    font-size: 0.85em;
+    color: #777;
+    margin-top: 5px;
+}
+
+.pdv-product-info {
+    border: 1px dashed #ddd;
+    padding: 10px;
+    border-radius: 4px;
+    color: #666;
+    font-style: italic;
+    min-height: 40px; /* Garante um tamanho mínimo */
+}
+
+.pdv-product-info p {
+    margin: 0;
+}
+
+/* Estilo para os botões de ação */
+.pdv-actions {
+    display: flex;
+    flex-wrap: wrap; /* Permite que os botões quebrem linha */
+    gap: 10px; /* Espaçamento entre os botões */
+    margin-top: auto; /* Empurra os botões para o final da coluna */
+}
+
+.action-button, .payment-button {
+    flex: 1 1 auto; /* Permite que os botões cresçam e encolham, mas mantêm o tamanho mínimo */
+    padding: 15px 20px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #fff;
+    background-color: #007bff; /* Cor primária para botões */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    min-width: 150px; /* Garante que os botões não fiquem muito pequenos */
+}
+
+.action-button:hover, .payment-button:hover {
+    background-color: #0056b3; /* Escurece no hover */
+    transform: translateY(-2px); /* Pequeno efeito de levantamento */
+}
+
+.action-button:active, .payment-button:active {
+    transform: translateY(0); /* Efeito de clique */
+}
+
+.action-button.secondary {
+    background-color: #6c757d; /* Cor secundária para botões de ação (ex: Cancelar) */
+}
+
+.action-button.secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Área de Pagamento */
+.pdv-payment-area {
+    background-color: #e9f5ff; /* Fundo mais claro para a área de pagamento */
+    border: 1px solid #b3d9ff;
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+.pdv-payment-area h2 {
+    font-size: 1.3em;
+    color: #0056b3;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.payment-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.payment-button {
+    background-color: #28a745; /* Verde para botões de pagamento */
+}
+
+.payment-button:hover {
+    background-color: #218838;
+}
+
+.payment-help-text {
+    font-size: 0.9em;
+    color: #555;
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #cce0ff; /* Borda sutil para separar */
+}
+
+#payment-details {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px dashed #a5d8b2;
+    border-radius: 4px;
+    text-align: center;
+    color: #333;
+    min-height: 80px; /* Espaço para o QR Code */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+}
+
+
+/* Responsividade para telas menores (celulares) */
+@media (max-width: 768px) {
+    .pdv-container {
+        flex-direction: column; /* Colunas se tornam linhas empilhadas */
+        height: auto; /* Altura automática para conteúdo */
+    }
+
+    .pdv-col-left, .pdv-col-right {
+        flex: none; /* Remove o flex-grow/shrink */
+        width: 100%; /* Ocupa toda a largura */
+        height: auto;
+        box-shadow: none; /* Remove sombra lateral */
+        padding: 15px;
+    }
+
+    .pdv-col-left {
+        padding-bottom: 0; /* Remove padding inferior para evitar espaço duplo */
+    }
+
+    .pdv-product-list {
+        max-height: 300px; /* Limita a altura da lista de produtos em telas pequenas */
+        margin-bottom: 15px;
+    }
+
+    .pdv-totals {
+        border-top: 1px solid #ddd;
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+
+    .pdv-input-area input[type="text"] {
+        width: calc(100% - 30px); /* Ajusta para padding */
+    }
+
+    .pdv-actions {
+        flex-direction: column; /* Botões de ação em coluna */
+        gap: 8px;
+    }
+
+    .action-button, .payment-button {
+        width: 100%; /* Botões de ação e pagamento ocupam a largura total */
+        min-width: unset; /* Remove o min-width para celulares */
+    }
+
+    .payment-options {
+        flex-direction: column;
+    }
+}
+
+/* Estilos para o corpo da página para remover margens padrão */
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* Esconder a barra de rolagem quando não for necessária no container principal */
+html, body {
+    overflow: hidden;
+}
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: flex; /* Usamos flex para centralizar o conteúdo */
+    align-items: center; /* Centraliza verticalmente */
+    justify-content: center; /* Centraliza horizontalmente */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto; /* Centered */
+    padding: 30px;
+    border: 1px solid #888;
+    border-radius: 8px;
+    width: 80%; /* Could be more responsive */
+    max-width: 500px; /* Max width for desktop */
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    position: relative;
+    text-align: center;
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #000;
+    text-decoration: none;
+}
+
+.modal-content h2 {
+    color: #0056b3;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.6em;
+}
+
+.modal-product-info {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #444;
+}
+
+.modal-input-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#modal-quantity-input {
+    width: 150px;
+    padding: 12px;
+    font-size: 1.4em;
+    border: 2px solid #007bff;
+    border-radius: 5px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+#modal-quantity-input:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 8px rgba(0,86,179,0.3);
+}
+
+.modal-unit-label {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-left: 10px;
+    color: #555;
+}
+
+.modal-error-text {
+    color: #dc3545; /* Cor vermelha para erros */
+    font-size: 0.9em;
+    margin-top: -10px;
+    margin-bottom: 15px;
+    min-height: 20px; /* Garante espaço para a mensagem de erro */
+}
+
+.modal-content .action-button {
+    margin: 5px;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    min-width: 120px; /* Adapta o tamanho dos botões no modal */
+}
+
+.product-unit-display {
+    font-size: 0.9em;
+    color: #666;
+    margin-left: 5px;
+    font-weight: normal;
+}
+
+/* Responsividade para o modal */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+    #modal-quantity-input {
+        width: 120px;
+        font-size: 1.2em;
+    }
+    .modal-unit-label {
+        font-size: 1.2em;
+    }
+    .modal-content .action-button {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+.action-button.success {
+    background-color: #28a745; /* Verde padrão de sucesso */
+    flex: 1 1 100%; /* Faz o botão de nova venda ocupar a largura total, se necessário */
+}
+
+.action-button.success:hover {
+    background-color: #218838;
+}
+
+.pix-copy-paste-code {
+    width: calc(100% - 20px); /* Ocupa quase toda a largura */
+    height: 80px; /* Altura fixa para ser visível */
+    padding: 10px;
+    margin: 10px auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: monospace; /* Fonte monoespaçada para códigos */
+    font-size: 0.95em;
+    resize: vertical; /* Permite redimensionamento vertical pelo usuário */
+    display: block; /* Garante que ocupe a largura completa */
+    background-color: #f0f0f0;
+    color: #333;
+    cursor: text;
+}
+
+#pix-payment-modal .modal-content {
+    max-width: 550px; /* Um pouco maior para o PIX */
+}
+
+.modal-payment-amount {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+#modal-pix-total {
+    color: #28a745; /* Verde para o total */
+}
+
+.pix-qr-section {
+    margin-bottom: 25px;
+    border: 1px dashed #b3d9ff;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #e9f5ff;
+}
+
+#modal-qrcode-display canvas { /* O qrcode.js desenha em um canvas, estilize-o */
+    border: 5px solid #fff; /* Borda branca no QR */
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.pix-copia-cola-section {
+    margin-bottom: 25px;
+}
+
+#modal-pix-copy-paste-code { /* Reutiliza o estilo do .pix-copy-paste-code */
+    height: 80px; /* Altura do textarea */
+    width: calc(100% - 20px);
+}
+
+#modal-copy-pix-button {
+    margin-top: 10px;
+    background-color: #6f42c1; /* Cor para o botão de copiar (ex: roxo) */
+}
+#modal-copy-pix-button:hover {
+    background-color: #5b359f;
+}
+
+.pix-transaction-info {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: #777;
+}
+
+#modal-pix-status {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.modal-pix-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+.modal-pix-actions .action-button {
+    flex: 1; /* Para os botões dividirem o espaço */
+    max-width: 220px; /* Largura máxima para não ficarem muito grandes */
+}
+
+/* Ajustes para o botão fechar específico do modal PIX */
+.pix-close-button {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.pix-close-button:hover {
+    color: #000;
+}
+
+/* Responsividade específica para o modal PIX */
+@media (max-width: 768px) {
+    #pix-payment-modal .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+    .modal-pix-actions {
+        flex-direction: column; /* Botões em coluna em telas pequenas */
+        gap: 10px;
+    }
+    .modal-pix-actions .action-button {
+        width: 100%;
+        max-width: unset;
+    }
+}
+
+/* --- Estilos para o Modal de Pagamento Criptomoeda (reutiliza muitos estilos do PIX) --- */
+#crypto-payment-modal .modal-content {
+     max-width: 580px; /* Levemente maior que PIX, se necessário */
+ }
+
+ .modal-crypto-currency-amount {
+     font-size: 1.2em;
+     font-weight: bold;
+     color: #555;
+     margin-bottom: 15px;
+ }
+
+ .crypto-qr-section, .crypto-address-section {
+     margin-bottom: 25px;
+     border: 1px dashed #b3d9ff;
+     padding: 15px;
+     border-radius: 8px;
+     background-color: #e9f5ff;
+ }
+
+ #modal-crypto-qrcode-display canvas {
+     border: 5px solid #fff;
+     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+ }
+
+ #modal-crypto-address {
+     height: 80px;
+     width: calc(100% - 20px);
+ }
+
+ #modal-copy-crypto-address-button {
+     margin-top: 10px;
+     background-color: #6f42c1; /* Roxo para copiar */
+ }
+ #modal-copy-crypto-address-button:hover {
+     background-color: #5b359f;
+ }
+
+ .modal-crypto-actions {
+     display: flex;
+     justify-content: center;
+     gap: 15px;
+     margin-top: 25px;
+ }
+ .modal-crypto-actions .action-button {
+     flex: 1;
+     max-width: 220px;
+ }
+
+ /* Estilos para a seleção de criptomoeda e mínimo */
+.crypto-selection-area {
+    margin-top: 20px;
+    margin-bottom: 25px;
+    padding: 15px;
+    border: 1px dashed #b3d9ff;
+    border-radius: 8px;
+    background-color: #e9f5ff;
+    text-align: left; /* Alinha o label e select à esquerda */
+}
+
+.crypto-selection-area label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+}
+
+.crypto-selection-area .form-control { /* Estilo genérico para selects/inputs */
+    width: calc(100% - 20px); /* Ajusta para padding */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    outline: none;
+    margin-bottom: 15px;
+}
+
+.crypto-selection-area .form-control:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 5px rgba(0,86,179,0.2);
+}
+
+.crypto-min-amount-info {
+    font-size: 0.95em;
+    color: #666;
+    margin-top: 5px;
+}
+
+#modal-crypto-min-brl {
+    font-weight: bold;
+    color: #333;
+}
+
+/* Estilos para botões pequenos no cabeçalho */
+.action-button.small {
+    padding: 5px 10px;
+    font-size: 0.8em;
+    min-width: unset;
+}
+
+/* Estilo para botão terciário (ex: Sair) */
+.action-button.tertiary {
+    background-color: #6c757d; /* Cinza */
+}
+.action-button.tertiary:hover {
+    background-color: #5a6268;
+}
