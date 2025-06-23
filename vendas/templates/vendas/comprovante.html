@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprovante de Venda</title>
+    <style>
+        /* Estilos otimizados para impressão em impressora térmica (largura estreita) */
+        body {
+            font-family: 'Consolas', 'Courier New', monospace; /* Fonte monoespaçada para clareza */
+            font-size: 10px; /* Tamanho da fonte menor, típico de comprovantes */
+            width: 80mm; /* Largura comum de bobina de impressora térmica (ajuste se sua impressora for diferente) */
+            margin: 0 auto; /* Centraliza na página, mas para impressão fica à esquerda */
+            padding: 5mm; /* Margem interna */
+            box-sizing: border-box;
+            line-height: 1.4;
+            color: #000; /* Garante texto preto */
+            background-color: #fff; /* Fundo branco para impressão */
+        }
+
+        .receipt-header, .receipt-footer {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .receipt-header h1 {
+            font-size: 1.2em;
+            margin: 0;
+            padding: 0;
+        }
+
+        .receipt-details, .receipt-totals {
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #000; /* Linha tracejada */
+            padding-bottom: 5px;
+        }
+
+        .receipt-details p, .receipt-totals p {
+            margin: 0;
+            padding: 2px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .receipt-items table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .receipt-items th, .receipt-items td {
+            padding: 2px 0;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: none; /* Remove bordas da tabela */
+        }
+        .receipt-items th {
+            font-weight: bold;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 5px;
+        }
+        .receipt-items .col-qty { width: 15%; text-align: left; }
+        .receipt-items .col-item { width: 55%; }
+        .receipt-items .col-price { width: 30%; text-align: right; }
+
+        .receipt-totals {
+            border-top: 1px dashed #000; /* Linha tracejada no topo dos totais */
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+        .receipt-totals .total-line {
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 4px 0;
+        }
+        .receipt-totals .total-line.grand-total {
+            font-size: 1.3em;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+
+        /* Ocultar elementos que não queremos imprimir (cabeçalhos/rodapés do navegador) */
+        @page {
+            margin: 0;
+        }
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                /* Adicione aqui qualquer estilo específico para impressora, ex: */
+                /* font-size: 9px; */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-header">
+        <h1>SEU MERCADO PDV</h1>
+        <p>Endereço: Rua Exemplo, 123 - Cidade/UF</p>
+        <p>CNPJ: 00.000.000/0001-00</p>
+    </div>
+
+    <div class="receipt-details">
+        <p><span>Venda ID:</span> <span id="comprovante-venda-id"></span></p>
+        <p><span>Data:</span> <span id="comprovante-data-hora"></span></p>
+        <p><span>Vendedor:</span> <span id="comprovante-vendedor"></span></p>
+        <p><span>Caixa ID:</span> <span id="comprovante-caixa-id"></span></p>
+    </div>
+
+    <div class="receipt-items">
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-qty">Qtd</th>
+                    <th class="col-item">Item</th>
+                    <th class="col-price">Total</th>
+                </tr>
+            </thead>
+            <tbody id="comprovante-itens-body">
+                {# Itens da venda serão preenchidos aqui #}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="receipt-totals">
+        <p><span>Subtotal:</span> <span id="comprovante-total-bruto"></span></p>
+        <p><span>Desconto:</span> <span id="comprovante-desconto"></span></p>
+        <p class="total-line grand-total"><span>TOTAL:</span> <span id="comprovante-total-liquido"></span></p>
+        <p><span>Forma Pgto:</span> <span id="comprovante-forma-pagamento"></span></p>
+        <p id="comprovante-transacao-id" style="font-size: 0.8em;"><span>Transação ID:</span> <span></span></p>
+    </div>
+
+    <div class="receipt-footer">
+        <p>Obrigado pela preferência!</p>
+        <p>www.seusite.com</p>
+    </div>
+</body>
+</html>

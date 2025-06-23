@@ -141,3 +141,26 @@ class EstoqueAjusteAPIView(LoginRequiredMixin, UserPassesTestMixin, View):
             return JsonResponse({'error': str(ve)}, status=400)
         except Exception as e:
             return JsonResponse({'error': f'Erro inesperado ao ajustar estoque: {str(e)}'}, status=500)
+
+
+class EstoqueBaixoAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        # Filtra produtos cujo estoque está abaixo ou igual ao mínimo
+        produtos_baixo_estoque = Produto.objects.filter(
+            estoque__lte=F('estoque_minimo'),  # Estoque atual <= estoque mínimo
+            ativo=True  # Apenas produtos ativos
+        ).order_by('nome')  # Ordena por nome
+
+        produtos_data = []
+        for produto in produtos_baixo_estoque:
+            produtos_data.append({
+                'id': produto.id,
+                'codigo_barras': produto.codigo_barras,
+                'nome': produto.nome,
+                'estoque': str(produto.estoque),
+                'estoque_minimo': str(produto.estoque_minimo),
+                'unidade_medida': produto.unidade_medida,
+                'status_estoque': 'CRÍTICO'  # Ou 'BAIXO'
+            })
+
+        return JsonResponse({'produtos_baixo_estoque': produtos_data}, status=200)

@@ -35,3 +35,11 @@ class UserStatusAPIView(View):
             return JsonResponse({'is_authenticated': True, 'username': request.user.username}, status=200)
         else:
             return JsonResponse({'is_authenticated': False}, status=200)
+
+def custom_404_view(request, exception):
+    if request.user.is_authenticated:
+        # Usuário logado: redireciona para a home (PDV)
+        return redirect('pdv')
+    else:
+        # Usuário deslogado: redireciona para a página de login
+        return redirect('login')

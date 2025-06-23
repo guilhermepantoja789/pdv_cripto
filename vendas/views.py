@@ -5,10 +5,12 @@ import json
 import os
 import time
 import uuid
+from datetime import datetime
 from decimal import Decimal
 import requests
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from django.db.models import Sum, Count
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views import View
@@ -518,3 +520,140 @@ class ConsultarCaixaStatusAPIView(LoginRequiredMixin, View):
             }, status=200)
         else:
             return JsonResponse({'status': 'FECHADO'}, status=200)
+
+
+class ResumoVendasAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        # Parâmetros de filtro
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        forma_pagamento = request.GET.get('forma_pagamento')  # Opcional
+
+        vendas = Venda.objects.all()
+
+        # Filtrar por período de data
+        if start_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                vendas = vendas.filter(data_hora__date__gte=start_date)
+            except ValueError:
+                return JsonResponse({'error': 'Formato de data inicial inválido (YYYY-MM-DD).'}, status=400)
+
+        if end_date_str:
+            try:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                vendas = vendas.filter(data_hora__date__lte=end_date)
+            except ValueError:
+                return JsonResponse({'error': 'Formato de data final inválido (YYYY-MM-DD).'}, status=400)
+
+        # Filtro por forma de pagamento
+        if forma_pagamento and forma_pagamento != 'todos':
+            vendas = vendas.filter(forma_pagamento=forma_pagamento.upper())
+
+        # Agregação de dados
+        resumo = vendas.aggregate(
+            total_vendas_liquido=Sum('total_liquido'),
+            total_descontos=Sum('desconto'),
+            total_itens_vendidos=Sum('itens__quantidade'),  # Soma a quantidade de todos os itens de venda
+            total_transacoes=Count('id')
+        )
+
+        # Resumo por forma de pagamento
+        vendas_por_forma_pagamento = vendas.values('forma_pagamento').annotate(
+            total_liquido=Sum('total_liquido'),
+            num_transacoes=Count('id')
+        ).order_by('-total_liquido')
+
+        # Retorna 0 se os campos forem nulos (sem vendas no período)
+        total_vendas_liquido = resumo['total_vendas_liquido'] if resumo['total_vendas_liquido'] else Decimal('0.00')
+        total_descontos = resumo['total_descontos'] if resumo['total_descontos'] else Decimal('0.00')
+        total_itens_vendidos = resumo['total_itens_vendidos'] if resumo['total_itens_vendidos'] else Decimal('0.00')
+
+        return JsonResponse({
+            'total_vendas_liquido': str(total_vendas_liquido),
+            'total_descontos': str(total_descontos),
+            'total_itens_vendidos': str(total_itens_vendidos),
+            'total_transacoes': resumo['total_transacoes'],
+            'detalhes_por_forma_pagamento': list(vendas_por_forma_pagamento)
+        }, status=200)
+
+
+# NOVO: API de Produtos Mais Vendidos
+class ProdutosMaisVendidosAPIView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+        limit = int(request.GET.get('limit', 10))  # Limite de produtos (top 10 por padrão)
+
+        itens_venda = ItemVenda.objects.all()
+
+        if start_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                itens_venda = itens_venda.filter(venda__data_hora__date__gte=start_date)
+            except ValueError:
+                return JsonResponse({'error': 'Formato de data inicial inválido (YYYY-MM-DD).'}, status=400)
+
+        if end_date_str:
+            try:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                itens_venda = itens_venda.filter(venda__data_hora__date__lte=end_date)
+            except ValueError:
+                return JsonResponse({'error': 'Formato de data final inválido (YYYY-MM-DD).'}, status=400)
+
+        # Agrupar por produto e somar a quantidade vendida
+        produtos_vendidos = itens_venda.values('produto__nome', 'produto__codigo_barras',
+                                               'produto__unidade_medida').annotate(
+            total_quantidade_vendida=Sum('quantidade'),
+            total_valor_vendido=Sum('subtotal_item')
+        ).order_by('-total_quantidade_vendida')[:limit]  # Ordena e limita
+
+        return JsonResponse({'produtos_mais_vendidos': list(produtos_vendidos)}, status=200)
+
+
+class DetalhesVendaAPIView(LoginRequiredMixin, View):
+    def get(self, request, venda_id, *args, **kwargs):
+        try:
+            venda = Venda.objects.get(id=venda_id)
+
+            # Garante que apenas o vendedor ou um superusuário possa ver os detalhes da venda
+            if not request.user.is_superuser and venda.vendedor != request.user:
+                return JsonResponse({'error': 'Você não tem permissão para ver os detalhes desta venda.'}, status=403)
+
+            itens_venda_data = []
+            for item in venda.itens.all():  # Assume related_name='itens' em ItemVenda
+                itens_venda_data.append({
+                    'produto_nome': item.produto.nome,
+                    'produto_codigo_barras': item.produto.codigo_barras,
+                    'quantidade': str(item.quantidade),
+                    'unidade_medida': item.produto.unidade_medida,
+                    'preco_unitario': str(item.preco_unitario),
+                    'subtotal_item': str(item.subtotal_item)
+                })
+
+            # Dados do vendedor e caixa
+            vendedor_username = venda.vendedor.username if venda.vendedor else 'N/A'
+            caixa_id = venda.caixa.id if venda.caixa else 'N/A'
+            caixa_saldo_inicial = str(
+                venda.caixa.saldo_inicial) if venda.caixa and venda.caixa.saldo_inicial is not None else 'N/A'
+
+            venda_data = {
+                'id': venda.id,
+                'data_hora': venda.data_hora.isoformat(),
+                'total_bruto': str(venda.total_bruto),
+                'desconto': str(venda.desconto),
+                'total_liquido': str(venda.total_liquido),
+                'forma_pagamento': venda.get_forma_pagamento_display(),  # Obtém o nome amigável
+                'transacao_id_provedor': venda.transacao_id_provedor,
+                'vendedor_username': vendedor_username,
+                'caixa_id': caixa_id,
+                'caixa_saldo_inicial': caixa_saldo_inicial,
+                'itens': itens_venda_data
+            }
+
+            return JsonResponse(venda_data, status=200)
+
+        except Venda.DoesNotExist:
+            return JsonResponse({'error': 'Venda não encontrada.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': f'Erro inesperado ao obter detalhes da venda: {str(e)}'}, status=500)

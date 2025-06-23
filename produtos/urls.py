@@ -6,5 +6,8 @@ urlpatterns = [
     path('api/buscar-produto/', ProdutoSearchView.as_view(), name='api_buscar_produto'),
     path('api/estoque/listar/', EstoqueListView.as_view(), name='api_estoque_listar'),
     path('api/estoque/ajustar/', EstoqueAjusteAPIView.as_view(), name='api_estoque_ajustar'),
+    path('api/estoque/listar/', EstoqueListView.as_view(), name='api_estoque_listar'),
+    path('api/estoque/ajustar/', EstoqueAjusteAPIView.as_view(), name='api_estoque_ajustar'),
+    path('api/estoque/baixo/', EstoqueBaixoAPIView.as_view(), name='api_estoque_baixo'), # NOVA URL
 
 ]

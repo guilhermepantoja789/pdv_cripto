@@ -13,4 +13,7 @@ urlpatterns = [
     path('api/caixa/abrir/', AbrirCaixaAPIView.as_view(), name='api_abrir_caixa'),
     path('api/caixa/fechar/', FecharCaixaAPIView.as_view(), name='api_fechar_caixa'),
     path('api/caixa/status/', ConsultarCaixaStatusAPIView.as_view(), name='api_caixa_status'), # NOVO
+    path('api/relatorios/resumo-vendas/', ResumoVendasAPIView.as_view(), name='api_resumo_vendas'),
+    path('api/relatorios/mais-vendidos/', ProdutosMaisVendidosAPIView.as_view(), name='api_produtos_mais_vendidos'),
+    path('api/vendas/<int:venda_id>/detalhes/', DetalhesVendaAPIView.as_view(), name='api_detalhes_venda'), # NOVO
 ]

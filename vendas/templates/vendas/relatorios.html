@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Relatórios - Sistema PDV{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'vendas/css/relatorios.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+    <header class="reports-header">
+        <h1>Módulo de Relatórios</h1>
+        <div class="header-controls">
+            <a href="{% url 'pdv' %}" class="action-button secondary">Voltar ao PDV</a>
+        </div>
+    </header>
+
+    <section class="report-section">
+        <h2 class="section-title">Resumo de Vendas por Período</h2>
+        <div class="filters-row">
+            <div class="form-group">
+                <label for="resumo-start-date">Data Início:</label>
+                <input type="date" id="resumo-start-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="resumo-end-date">Data Fim:</label>
+                <input type="date" id="resumo-end-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="resumo-forma-pagamento">Forma de Pagamento:</label>
+                <select id="resumo-forma-pagamento" class="form-control">
+                    <option value="todos">Todas</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="cartao">Cartão</option>
+                    <option value="pix">PIX</option>
+                    <option value="criptomoeda">Criptomoeda</option>
+                </select>
+            </div>
+            <button id="resumo-filter-button" class="action-button">Gerar Resumo</button>
+        </div>
+
+        <div class="report-summary-cards">
+            <div class="card">
+                <h3>Total Vendas Líquidas</h3>
+                <p id="resumo-total-vendas" class="card-value">R$ 0,00</p>
+            </div>
+            <div class="card">
+                <h3>Total Descontos</h3>
+                <p id="resumo-total-descontos" class="card-value">R$ 0,00</p>
+            </div>
+            <div class="card">
+                <h3>Total Itens Vendidos</h3>
+                <p id="resumo-total-itens" class="card-value">0</p>
+            </div>
+            <div class="card">
+                <h3>Total Transações</h3>
+                <p id="resumo-total-transacoes" class="card-value">0</p>
+            </div>
+        </div>
+
+        <h3 class="section-subtitle">Vendas por Forma de Pagamento</h3>
+        <div class="chart-container"> {# NOVO: Container para o gráfico #}
+            <canvas id="vendas-forma-pagamento-chart"></canvas> {# NOVO: Elemento canvas para o gráfico #}
+        </div>
+        <div class="report-table-container">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Forma de Pagamento</th>
+                        <th>Total Líquido</th>
+                        <th>Transações</th>
+                    </tr>
+                </thead>
+                <tbody id="resumo-formas-pagamento-body">
+                    <tr><td colspan="3" class="text-center">Nenhum dado.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="report-section">
+        <h2 class="section-title">Produtos Mais Vendidos</h2>
+        <div class="filters-row">
+            <div class="form-group">
+                <label for="mais-vendidos-start-date">Data Início:</label>
+                <input type="date" id="mais-vendidos-start-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="mais-vendidos-end-date">Data Fim:</label>
+                <input type="date" id="mais-vendidos-end-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="mais-vendidos-limit">Top:</label>
+                <input type="number" id="mais-vendidos-limit" value="10" min="1" class="form-control small-input">
+            </div>
+            <button id="mais-vendidos-filter-button" class="action-button">Gerar Ranking</button>
+        </div>
+        <div class="chart-container"> {# NOVO: Container para o gráfico #}
+            <canvas id="produtos-mais-vendidos-chart"></canvas> {# NOVO: Elemento canvas para o gráfico #}
+        </div>
+        <div class="report-table-container">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Código</th>
+                        <th>Quantidade Vendida</th>
+                        <th>Valor Total Vendido</th>
+                    </tr>
+                </thead>
+                <tbody id="mais-vendidos-body">
+                    <tr><td colspan="4" class="text-center">Nenhum dado.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="report-section">
+        <h2 class="section-title">Estoque Baixo/Crítico</h2>
+        <button id="estoque-baixo-refresh-button" class="action-button">Atualizar Lista</button>
+        <div class="report-table-container">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Código</th>
+                        <th>Estoque Atual</th>
+                        <th>Estoque Mínimo</th>
+                        <th>Unid.</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="estoque-baixo-body">
+                    <tr><td colspan="6" class="text-center">Nenhum dado.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    {# Incluir Chart.js #}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script> {# NOVO: Chart.js CDN #}
+    <script>
+        // URLs do Django passadas para o JavaScript
+        const DJANGO_URLS = {
+            resumoVendas: "{% url 'api_resumo_vendas' %}",
+            produtosMaisVendidos: "{% url 'api_produtos_mais_vendidos' %}",
+            estoqueBaixo: "{% url 'api_estoque_baixo' %}",
+            // Inclua outras URLs se necessário
+        };
+    </script>
+    <script src="{% static 'vendas/js/relatorios.js' %}"></script>
+{% endblock %}

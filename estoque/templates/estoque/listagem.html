@@ -49,29 +49,41 @@
     <div id="stock-adjustment-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close-button adjustment-close-button">&times;</span>
-            <h2>Ajustar Estoque: <span id="adjustment-product-name"></span></h2>
-            <p>Produto: <strong id="adjustment-product-info"></strong></p>
-            <p>Estoque Atual: <strong id="adjustment-current-stock"></strong></p>
+            <h2 class="modal-title">Ajustar Estoque</h2>
+            <p class="modal-subtitle">Produto: <strong id="adjustment-product-name"></strong></p>
+            <p class="modal-info">Código: <strong id="adjustment-product-info"></strong> | Estoque Atual: <strong id="adjustment-current-stock"></strong></p>
 
-            <div class="modal-form-group">
-                <label for="adjustment-type">Tipo de Ajuste:</label>
-                <select id="adjustment-type" class="form-control">
-                    <option value="ENTRADA">Entrada de Estoque</option>
-                    <option value="SAIDA">Saída Manual</option>
-                    <option value="AJUSTE">Ajuste de Inventário</option>
-                </select>
+            <div class="modal-body-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adjustment-type">Tipo de Ajuste:</label>
+                        <select id="adjustment-type" class="form-control">
+                            <option value="ENTRADA">Entrada de Estoque</option>
+                            <option value="SAIDA">Saída Manual</option>
+                            <option value="AJUSTE">Ajuste de Inventário</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adjustment-quantity">Quantidade:</label>
+                        <input type="number" id="adjustment-quantity" step="0.001" min="0.001" value="1.000" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="adjustment-observation">Observação:</label>
+                        <textarea id="adjustment-observation" rows="3" class="form-control"></textarea>
+                    </div>
+                </div>
             </div>
-            <div class="modal-form-group">
-                <label for="adjustment-quantity">Quantidade:</label>
-                <input type="number" id="adjustment-quantity" step="0.001" min="0.001" value="1.000" class="form-control">
+
+            <p id="adjustment-message" class="message"></p> {# Usar classe 'message' para consistência #}
+
+            <div class="modal-footer-actions">
+                <button id="adjustment-confirm-button" class="action-button success">Confirmar Ajuste (Enter)</button>
+                <button id="adjustment-cancel-button" class="action-button secondary">Cancelar (Esc)</button>
             </div>
-            <div class="modal-form-group">
-                <label for="adjustment-observation">Observação:</label>
-                <textarea id="adjustment-observation" rows="3" class="form-control"></textarea>
-            </div>
-            <p id="adjustment-message" class="modal-error-text"></p>
-            <button id="adjustment-confirm-button" class="action-button">Confirmar Ajuste</button>
-            <button id="adjustment-cancel-button" class="action-button secondary">Cancelar</button>
         </div>
     </div>
 </div>

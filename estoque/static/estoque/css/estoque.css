@@ -19,37 +19,53 @@ body {
 
 .estoque-header {
     display: flex;
+    flex-wrap: wrap; /* Permite que os itens quebrem linha em telas menores */
     justify-content: space-between;
     align-items: center;
     margin-bottom: 25px;
     border-bottom: 1px solid #eee;
     padding-bottom: 15px;
+    gap: 15px; /* Espaçamento entre os elementos do cabeçalho */
 }
 
 .estoque-header h1 {
     margin: 0;
     font-size: 2em;
     color: #0056b3;
+    flex-basis: 100%; /* Ocupa a largura total para o título */
+    text-align: center;
 }
 
 .header-controls {
     display: flex;
+    flex-wrap: wrap; /* Permite que os controles quebrem linha */
     gap: 10px;
     align-items: center;
+    flex-grow: 1; /* Permite que ocupe o espaço disponível */
+    justify-content: flex-end; /* Alinha à direita */
 }
 
+/* --- Estilos Gerais de Formulário (aplicáveis no PDV também) --- */
 .form-control {
-    padding: 8px 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 10px 12px; /* Aumenta padding */
+    border: 1px solid #dcdcdc; /* Borda mais suave */
+    border-radius: 6px; /* Borda mais arredondada */
     font-size: 1em;
     outline: none;
-    transition: border-color 0.2s ease;
+    transition: all 0.2s ease; /* Transição suave para foco */
+    box-sizing: border-box; /* Inclui padding na largura */
+    color: #333;
+    background-color: #fcfcfc;
 }
 
 .form-control:focus {
     border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Sombra de foco mais moderna */
+    background-color: #fff;
+}
+
+textarea.form-control {
+    resize: vertical; /* Permite redimensionar verticalmente */
 }
 
 /* Reutiliza estilos de action-button do pdv.css */
@@ -162,43 +178,190 @@ body {
     background-color: #0056b3;
 }
 
-/* Estilos para o Modal de Ajuste de Estoque (reutiliza estilos gerais de modal) */
-#stock-adjustment-modal .modal-content {
-    max-width: 500px;
-    text-align: left;
+/* --- ESTILOS BASE PARA MODAIS (Copiar estes se não estiverem) --- */
+.modal {
+    /* Escondido por padrão, exibido com display: flex via JS */
+    display: none;
+    /* Fixa o modal na viewport */
+    position: fixed;
+    /* Garante que ele fique por cima de outros elementos */
+    z-index: 1000;
+    /* Ocupa a tela inteira */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    /* Permite scroll se o conteúdo do modal for maior que a tela */
+    overflow: auto;
+    /* Fundo escuro semi-transparente */
+    background-color: rgba(0,0,0,0.4);
+    /* Usa flexbox para centralizar o conteúdo do modal */
+    display: flex; /* O JS muda para flex para exibir */
+    align-items: center; /* Centraliza verticalmente */
+    justify-content: center; /* Centraliza horizontalmente */
 }
 
-.modal-form-group {
-    margin-bottom: 15px;
+.modal-content {
+    /* Estilos para a caixa do modal em si */
+    background-color: #fefefe;
+    padding: 30px; /* Padding interno */
+    border: 1px solid #888;
+    border-radius: 8px; /* Cantos arredondados */
+    width: 90%; /* Largura padrão, responsiva */
+    max-width: 500px; /* Largura máxima em telas grandes */
+    /* Sombra para dar profundidade */
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    position: relative; /* Para posicionar o botão de fechar */
+    text-align: left; /* Alinhamento padrão do texto */
 }
 
-.modal-form-group label {
-    display: block;
-    margin-bottom: 5px;
+.close-button {
+    /* Botão 'x' para fechar o modal */
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
     font-weight: bold;
+    cursor: pointer;
 }
 
-.modal-form-group .form-control {
-    width: calc(100% - 24px); /* Ajusta para padding */
-    padding: 10px;
+.close-button:hover,
+.close-button:focus {
+    color: #000;
+    text-decoration: none;
+}
+/* --- FIM DOS ESTILOS BASE PARA MODAIS --- */
+
+
+/* Estilos para o Modal de Ajuste de Estoque (dentro do modal-content) */
+#stock-adjustment-modal .modal-content {
+    max-width: 550px; /* Largura um pouco maior para o padrão */
+    text-align: center; /* Centraliza cabeçalho e rodapé do modal */
+    padding: 35px;
+}
+
+.modal-title {
+    color: #0056b3;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.8em;
+}
+
+.modal-subtitle {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 10px;
+}
+
+.modal-info {
+    font-size: 0.95em;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.modal-info strong {
+    color: #333;
+}
+
+.modal-body-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaço entre as linhas do formulário */
+    margin-bottom: 25px;
+}
+
+.form-row {
+    display: flex;
+    width: 100%;
+}
+
+.form-group {
+    flex: 1; /* Ocupa o espaço disponível na linha */
+    margin-right: 15px; /* Espaço entre grupos na mesma linha */
+}
+
+.form-group:last-child {
+    margin-right: 0; /* Remove margem do último grupo na linha */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #555;
+    text-align: left; /* Alinha label à esquerda */
+}
+
+.form-group input[type="number"],
+.form-group select,
+.form-group textarea {
+    width: 100%; /* Faz preencher a largura do form-group */
+}
+
+.form-group.full-width {
+    flex: none; /* Não ocupa o espaço, controla a própria largura */
+    width: 100%; /* Ocupa a largura total da linha */
+    margin-right: 0;
+}
+
+.modal-footer-actions {
+    display: flex;
+    justify-content: center; /* Centraliza os botões */
+    gap: 15px; /* Espaço entre os botões */
+    margin-top: 25px;
+}
+
+.modal-footer-actions .action-button {
+    flex: 1; /* Botões dividem o espaço */
+    max-width: 180px; /* Largura máxima para botões grandes */
+    padding: 12px 20px; /* Aumenta padding dos botões do modal */
     font-size: 1em;
 }
 
-.modal-error-text {
-    color: #dc3545;
+/* Estilo para mensagens dentro do modal (reutiliza .message) */
+.message {
+    margin-top: 15px;
     font-size: 0.9em;
-    margin-top: 10px;
-    margin-bottom: 15px;
+    font-weight: bold;
+    text-align: center;
 }
 
-#adjustment-product-name {
-    color: #0056b3;
-    font-size: 1.5em;
-    display: block;
-    margin-bottom: 10px;
+.message.error {
+    color: #dc3545;
 }
-#adjustment-product-info, #adjustment-current-stock {
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 5px;
+
+.message.success {
+    color: #28a745;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+    .estoque-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .header-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .estoque-header h1 {
+        text-align: left;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .form-group {
+        margin-right: 0;
+    }
+    .modal-footer-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .modal-footer-actions .action-button {
+        max-width: 100%;
+    }
 }

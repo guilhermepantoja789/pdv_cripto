@@ -13,6 +13,13 @@ function getCookie(name) {
             }
         }
     }
+    // NOVO: Fallback para meta tag se o cookie não for encontrado
+    if (!cookieValue) {
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) {
+            cookieValue = metaTag.getAttribute('content');
+        }
+    }
     return cookieValue;
 }
 
@@ -123,6 +130,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variável de controle para o ID do caixa aberto atualmente
     let currentOpenCashierId = null;
 
+    const discountModal = document.getElementById('discount-modal');
+    const discountCurrentTotalSpan = document.getElementById('discount-current-total');
+    const discountValueInput = document.getElementById('discount-value');
+    const discountPercentageInput = document.getElementById('discount-percentage');
+    const discountFinalTotalSpan = document.getElementById('discount-final-total');
+    const discountMessage = document.getElementById('discount-message');
+    const discountConfirmButton = document.getElementById('discount-confirm-button');
+    const discountCancelButton = document.getElementById('discount-cancel-button');
+    const discountCloseButton = discountModal.querySelector('.close-button');
+
+    let currentDiscountValue = 0
+
+    const btnPrintReceipt = document.getElementById('btn-print-receipt'); // NOVO BOTÃO
+
+     // Variável para armazenar o ID da última venda finalizada
+     let lastFinalizedSaleId = null;
+
     // --- Funções Auxiliares (Todas definidas antes de serem chamadas no fluxo principal) ---
 
     async function checkLoginAndCashierStatus() {
@@ -231,10 +255,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // NOVO: Fecha o modal de Abertura de Caixa
     function closeOpenCashierModal() {
         openCashierModal.style.display = 'none';
-        pdvState = 'PAYMENT_MODE'; // Volta para o modo de seleção de pagamento se veio de lá, ou ADDING_PRODUCTS
-        // Ou simplesmente volta para o PDV desativado
-        // Idealmente, se o caixa não foi aberto, o PDV permanece desativado
-        setPdvActiveState(false);
+        // CORREÇÃO: Volta para ADDING_PRODUCTS e desativa o PDV, pois o caixa não foi aberto
+        pdvState = 'ADDING_PRODUCTS';
+        setPdvActiveState(false); // Garante que o PDV principal esteja desativado
+        // Não precisa alertar aqui, o alerta de "abra o caixa" já aparece na inicialização se o caixa não está aberto.
     }
 
     // NOVO: Abre o modal de Fechamento de Caixa
@@ -310,8 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // NOVO: Fecha o modal de Fechamento de Caixa
     function closeCloseCashierModal() {
         closeCashierModal.style.display = 'none';
-        // PDV permanece desativado se o caixa foi fechado
-        setPdvActiveState(false);
+        // CORREÇÃO: Volta para ADDING_PRODUCTS e desativa o PDV, pois o caixa foi fechado
+        pdvState = 'ADDING_PRODUCTS';
+        setPdvActiveState(false); // Garante que o PDV principal esteja desativado
     }
 
     // NOVO: Lógica de Logout
@@ -518,25 +543,103 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Nova Venda Iniciada!');
     }
 
+    function openDiscountModal() {
+        if (saleItems.length === 0) {
+            alert('Adicione produtos à venda antes de aplicar um desconto!');
+            return;
+        }
+        discountModal.style.display = 'flex';
+        discountMessage.textContent = '';
+        discountMessage.classList.remove('error', 'success');
+
+        const currentTotal = parseFloat(finalTotalSpan.textContent.replace('R$ ', '').replace(',', '.'));
+        discountCurrentTotalSpan.textContent = `R$ ${currentTotal.toFixed(2).replace('.', ',')}`;
+
+        // Preenche com o valor do desconto já aplicado, se houver
+        discountValueInput.value = currentDiscountValue.toFixed(2);
+        discountPercentageInput.value = '0.00'; // Percentual começa zerado para novo cálculo
+
+        calculateDiscountPreview(); // Calcula o valor final com base no desconto inicial
+        discountValueInput.focus();
+        pdvState = 'DISCOUNT_MODE'; // Novo estado
+    }
+
+    // NOVO: Calcula o valor final no modal de desconto (preview)
+    function calculateDiscountPreview() {
+        const currentTotal = parseFloat(finalTotalSpan.textContent.replace('R$ ', '').replace(',', '.'));
+        let discountValue = parseFloat(discountValueInput.value.replace(',', '.'));
+        let discountPercentage = parseFloat(discountPercentageInput.value.replace(',', '.'));
+
+        if (isNaN(discountValue)) discountValue = 0;
+        if (isNaN(discountPercentage)) discountPercentage = 0;
+
+        // Se o percentual for inserido, ele tem precedência
+        if (discountPercentage > 0) {
+            discountValue = currentTotal * (discountPercentage / 100);
+        }
+
+        // Garante que o desconto não seja maior que o total da venda
+        if (discountValue > currentTotal) {
+            discountValue = currentTotal;
+        }
+
+        const finalTotalWithDiscount = currentTotal - discountValue;
+        discountFinalTotalSpan.textContent = `R$ ${finalTotalWithDiscount.toFixed(2).replace('.', ',')}`;
+        currentDiscountValue = discountValue; // Atualiza a variável global do desconto
+
+        // Atualiza o display de desconto na tela principal do PDV imediatamente
+        updateTotalsWithDiscount(discountValue);
+    }
+
+    // NOVO: Atualiza os totais na tela principal do PDV com o desconto aplicado
+    function updateTotalsWithDiscount(discount) {
+        const totalBruto = parseFloat(subtotalSpan.textContent.replace('R$ ', '').replace(',', '.'));
+        const totalComDesconto = totalBruto - discount;
+        discountsSpan.textContent = `R$ ${discount.toFixed(2).replace('.', ',')}`;
+        finalTotalSpan.textContent = `R$ ${totalComDesconto.toFixed(2).replace('.', ',')}`;
+    }
+
+
+    // NOVO: Confirma e aplica o desconto (fecha modal)
+    function confirmDiscount() {
+        calculateDiscountPreview(); // Recalcula uma última vez para garantir
+        discountModal.style.display = 'none';
+        pdvState = 'ADDING_PRODUCTS'; // Volta para o PDV principal
+        focusBarcodeInput(); // Retorna o foco ao registrador
+        alert(`Desconto de R$ ${currentDiscountValue.toFixed(2).replace('.', ',')} aplicado!`);
+    }
+
+    // NOVO: Cancela o desconto e fecha o modal
+    function cancelDiscount() {
+        discountModal.style.display = 'none';
+        // Reseta o desconto na tela principal para 0 se o modal foi cancelado
+        currentDiscountValue = 0;
+        updateTotalsWithDiscount(0);
+        pdvState = 'ADDING_PRODUCTS';
+        focusBarcodeInput();
+    }
+
+
     // Função para enviar os dados da venda para o backend e finalizar a transação
     async function finalizeSaleBackend(formaPagamento, transacaoIdProvedor = null) {
-        const totalBruto = parseFloat(subtotalSpan.textContent.replace('R$ ', '').replace(',', '.'));
-        const desconto = parseFloat(discountsSpan.textContent.replace('R$ ', '').replace(',', '.'));
-        const totalLiquido = parseFloat(finalTotalSpan.textContent.replace('R$ ', '').replace(',', '.'));
+         const totalBruto = parseFloat(subtotalSpan.textContent.replace('R$ ', '').replace(',', '.'));
+         // O desconto virá da variável global currentDiscountValue
+         const descontoAplicado = currentDiscountValue; // <<< CORREÇÃO AQUI!
+         const totalLiquido = totalBruto - descontoAplicado; // Recalcula total_liquido aqui
 
-        const vendaData = {
-            itens: saleItems.map(item => ({
-                id: item.id,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice
-            })),
-            forma_pagamento: formaPagamento,
-            total_bruto: totalBruto,
-            desconto: desconto,
-            total_liquido: totalLiquido,
-            transacao_id_provedor: transacaoIdProvedor,
-            caixa_id: currentOpenCashierId // NOVO: Passa o ID do caixa aberto
-        };
+         const vendaData = {
+             itens: saleItems.map(item => ({
+                 id: item.id,
+                 quantity: item.quantity,
+                 unitPrice: item.unitPrice
+             })),
+             forma_pagamento: formaPagamento,
+             total_bruto: totalBruto,
+             desconto: descontoAplicado, // <<< PASSA O DESCONTO APLICADO
+             total_liquido: totalLiquido, // <<< PASSA O TOTAL LÍQUIDO RECALCULADO
+             transacao_id_provedor: transacaoIdProvedor,
+             // caixa_id: currentOpenCashierId // Não precisa, o backend pega do request.user
+         };
 
         try {
             const response = await fetch(DJANGO_URLS.finalizeSale, { // <<< CORREÇÃO
@@ -549,21 +652,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.ok) {
                 console.log('Venda finalizada com sucesso!', responseData);
-                modalPixStatus.style.color = 'green'; // Atualiza status no modal PIX se veio de lá
+                modalPixStatus.style.color = 'green';
                 modalPixStatus.textContent = `PAGAMENTO CONFIRMADO! Venda #${responseData.venda_id} finalizada!`;
+
+                // Guarda o ID da venda para o botão de impressão
+                lastFinalizedSaleId = responseData.venda_id; // <<< ARMAZENA O ID
 
                 // Prepara a interface para uma nova venda
                 saleItems = [];
                 updateProductList();
-                paymentArea.style.display = 'none'; // Esconde a área de pagamento principal
-                pixPaymentModal.style.display = 'none'; // Esconde o modal PIX
+                paymentArea.style.display = 'none';
+                pixPaymentModal.style.display = 'none'; // Garante que o modal PIX esteja escondido
                 modalQrcodeDisplay.innerHTML = ''; // Limpa o QR Code para a próxima vez
                 modalPixCopyPasteCode.value = ''; // Limpa o código copia e cola
 
-                btnFinalizeSale.style.display = 'none';
-                btnCancelSale.style.display = 'none';
-                btnApplyDiscount.style.display = 'none';
                 btnNewSale.style.display = 'block'; // Mostra botão Nova Venda
+                btnFinalizeSale.style.display = 'none'; // Esconde
+                btnCancelSale.style.display = 'none'; // Esconde
+                btnApplyDiscount.style.display = 'none'; // Esconde
+                btnPrintReceipt.style.display = 'inline-block'; // <<< MOSTRA BOTÃO IMPRIMIR
 
                 pdvState = 'SALE_COMPLETED_MODE'; // Define o estado para "venda concluída"
 
@@ -612,11 +719,6 @@ document.addEventListener('DOMContentLoaded', function() {
             startNewSale(); // Reutiliza a lógica de iniciar nova venda para limpar tudo
             console.log('Venda Cancelada!');
         }
-    }
-
-    function applyDiscount() {
-        console.log('Aplicar Desconto acionado!');
-        alert('Funcionalidade de Desconto em desenvolvimento!');
     }
 
     // Lida com a seleção da forma de pagamento (Dinheiro, Cartão, PIX, Criptomoeda)
@@ -1269,6 +1371,174 @@ document.addEventListener('DOMContentLoaded', function() {
         paymentDetailsDiv.textContent = ''; // Limpa qualquer detalhe de pagamento
     }
 
+    async function printReceipt() {
+        if (!lastFinalizedSaleId) {
+            alert('Nenhuma venda recente para imprimir comprovante.');
+            return;
+        }
+
+        // Abre uma nova janela/aba para o comprovante
+        const printWindow = window.open('', '_blank', 'width=400,height=600'); // Dimensões para preview de térmica
+
+        if (!printWindow) {
+            alert('Pop-ups bloqueados! Permita pop-ups para imprimir o comprovante.');
+            return;
+        }
+
+        // Carrega um HTML básico no pop-up enquanto busca os dados
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Comprovante de Venda</title>
+                <style>
+                    body { font-family: sans-serif; text-align: center; padding: 20px; }
+                    .loading-message { font-size: 1.2em; color: #555; }
+                </style>
+            </head>
+            <body>
+                <p class="loading-message">Carregando comprovante...</p>
+            </body>
+            </html>
+        `);
+        printWindow.document.close(); // Fecha o fluxo de escrita para renderizar
+
+        try {
+            // Busca os detalhes da venda no backend
+            const url = DJANGO_URLS.detalhesVenda.replace('0', lastFinalizedSaleId); // <<< CORREÇÃO AQUI
+
+            const response = await fetch(url); // Usa a URL construída
+            const responseData = await response.json();
+
+            if (response.ok) {
+                // Constrói o HTML do comprovante com os dados da venda
+                const comprovanteHtml = buildReceiptHtml(responseData);
+
+                printWindow.document.open(); // Abre o fluxo de escrita novamente
+                printWindow.document.write(comprovanteHtml);
+                printWindow.document.close();
+
+                // Espera um pouco para o conteúdo ser renderizado antes de imprimir
+                printWindow.onload = function() {
+                    setTimeout(() => {
+                        printWindow.print(); // Aciona a impressão
+                        // printWindow.close(); // Opcional: fecha a janela após imprimir (alguns browsers podem impedir)
+                    }, 500); // Pequeno delay
+                };
+
+            } else {
+                console.error('Erro ao buscar detalhes da venda para impressão:', responseData.error);
+                printWindow.document.body.innerHTML = `<p style="color: red;">Erro ao carregar comprovante: ${responseData.error || 'Verifique o console.'}</p>`;
+            }
+        } catch (error) {
+            console.error('Erro de conexão ao imprimir comprovante:', error);
+            printWindow.document.body.innerHTML = `<p style="color: red;">Erro de conexão ao gerar comprovante.</p>`;
+        }
+    }
+
+    // NOVO: Função para construir o HTML do comprovante com base nos dados da venda
+    function buildReceiptHtml(vendaData) {
+        // Preencher os dados no template HTML que criamos (comprovante.html)
+        // Isso pode ser feito carregando o template e substituindo os IDs
+        // Ou, para simplicidade, construindo a string HTML aqui.
+        // Vamos construir a string HTML diretamente, usando o template como base.
+
+        let itensHtml = '';
+        vendaData.itens.forEach(item => {
+            itensHtml += `
+                <tr>
+                    <td class="col-qty">${parseFloat(item.quantidade).toFixed(3).replace('.', ',')} ${item.unidade_medida}</td>
+                    <td class="col-item">${item.produto_nome}</td>
+                    <td class="col-price">R$ ${parseFloat(item.subtotal_item).toFixed(2).replace('.', ',')}</td>
+                </tr>
+            `;
+        });
+
+        // Formata data e hora
+        const dataHora = new Date(vendaData.data_hora);
+        const formattedDate = dataHora.toLocaleDateString('pt-BR');
+        const formattedTime = dataHora.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+
+        // Retorna o HTML completo do comprovante (adaptado do comprovante.html)
+        return `
+            <html>
+            <head>
+                <title>Comprovante de Venda #${vendaData.id}</title>
+                <style>
+                    body {
+                        font-family: 'Consolas', 'Courier New', monospace;
+                        font-size: 10px;
+                        width: 80mm;
+                        margin: 0 auto;
+                        padding: 5mm;
+                        box-sizing: border-box;
+                        line-height: 1.4;
+                        color: #000;
+                        background-color: #fff;
+                    }
+                    .receipt-header, .receipt-footer { text-align: center; margin-bottom: 10px; }
+                    .receipt-header h1 { font-size: 1.2em; margin: 0; padding: 0; }
+                    .receipt-details, .receipt-totals { margin-bottom: 10px; border-bottom: 1px dashed #000; padding-bottom: 5px; }
+                    .receipt-details p, .receipt-totals p { margin: 0; padding: 2px 0; display: flex; justify-content: space-between; }
+                    .receipt-items table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+                    .receipt-items th, .receipt-items td { padding: 2px 0; text-align: left; vertical-align: top; border-bottom: none; }
+                    .receipt-items th { font-weight: bold; border-bottom: 1px dashed #000; padding-bottom: 5px; }
+                    .receipt-items .col-qty { width: 15%; text-align: left; }
+                    .receipt-items .col-item { width: 55%; }
+                    .receipt-items .col-price { width: 30%; text-align: right; }
+                    .receipt-totals { border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; }
+                    .receipt-totals .total-line { font-weight: bold; font-size: 1.1em; padding: 4px 0; }
+                    .receipt-totals .total-line.grand-total { font-size: 1.3em; border-top: 1px dashed #000; padding-top: 5px; margin-top: 5px; }
+                    @page { margin: 0; }
+                    @media print { body { margin: 0; padding: 0; } }
+                </style>
+            </head>
+            <body>
+                <div class="receipt-header">
+                    <h1>SEU MERCADO PDV</h1>
+                    <p>Endereço: Rua Exemplo, 123 - Cidade/UF</p>
+                    <p>CNPJ: 00.000.000/0001-00</p>
+                </div>
+
+                <div class="receipt-details">
+                    <p><span>Venda ID:</span> <span>${vendaData.id}</span></p>
+                    <p><span>Data:</span> <span>${formattedDate} ${formattedTime}</span></p>
+                    <p><span>Vendedor:</span> <span>${vendaData.vendedor_username}</span></p>
+                    <p><span>Caixa ID:</span> <span>${vendaData.caixa_id}</span></p>
+                </div>
+
+                <div class="receipt-items">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="col-qty">Qtd</th>
+                                <th class="col-item">Item</th>
+                                <th class="col-price">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itensHtml}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="receipt-totals">
+                    <p><span>Subtotal:</span> <span>R$ ${parseFloat(vendaData.total_bruto).toFixed(2).replace('.', ',')}</span></p>
+                    <p><span>Desconto:</span> <span>R$ ${parseFloat(vendaData.desconto).toFixed(2).replace('.', ',')}</span></p>
+                    <p class="total-line grand-total"><span>TOTAL:</span> <span>R$ ${parseFloat(vendaData.total_liquido).toFixed(2).replace('.', ',')}</span></p>
+                    <p><span>Forma Pgto:</span> <span>${vendaData.forma_pagamento}</span></p>
+                    <p style="font-size: 0.8em;"><span>Transação ID:</span> <span>${vendaData.transacao_id_provedor || 'N/A'}</span></p>
+                </div>
+
+                <div class="receipt-footer">
+                    <p>Obrigado pela preferência!</p>
+                    <p>www.seusite.com</p>
+                </div>
+            </body>
+            </html>
+        `;
+    }
+
     // --- Event Listeners ---
 
     // Foca o input de código de barras ao carregar e quando a janela é focada
@@ -1330,8 +1600,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event Listeners para os botões de ação principal do PDV
     btnFinalizeSale.addEventListener('click', finalizeSale);
     btnCancelSale.addEventListener('click', cancelSale);
-    btnApplyDiscount.addEventListener('click', applyDiscount);
+    btnApplyDiscount.addEventListener('click', openDiscountModal);
     btnNewSale.addEventListener('click', startNewSale); // Listener para o botão Nova Venda
+
+    btnApplyDiscount.addEventListener('click', openDiscountModal); // Liga o botão do cabeçalho do PDV
+
+    btnPrintReceipt.addEventListener('click', printReceipt); // Ligar o novo botão
+    // Event Listeners para o Modal de Desconto
+    discountValueInput.addEventListener('input', function() {
+        discountPercentageInput.value = '0.00'; // Zera percentual se o valor for digitado
+        calculateDiscountPreview();
+    });
+    discountPercentageInput.addEventListener('input', function() {
+        discountValueInput.value = '0.00'; // Zera valor se o percentual for digitado
+        calculateDiscountPreview();
+    });
+
+    discountConfirmButton.addEventListener('click', confirmDiscount);
+    discountCancelButton.addEventListener('click', cancelDiscount);
+    discountCloseButton.addEventListener('click', cancelDiscount);
 
 
     // Event Listeners para o Modal de Quantidade/Peso
@@ -1377,15 +1664,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Listener de teclado para o modal de quantidade (Enter para confirmar, Esc para cancelar)
     quantityInputModal.addEventListener('keydown', function(event) {
-        if (pdvState === 'QUANTITY_INPUT_MODE') {
-            if (event.key === 'Enter') {
-                addProductFromModal();
-                event.preventDefault();
-            } else if (event.key === 'Escape') {
-                closeQuantityModal();
-                event.preventDefault();
-                event.stopPropagation();
-            }
+        // NÃO PRECISA MAIS DO if (pdvState === 'QUANTITY_INPUT_MODE') AQUI,
+        // pois este listener só é ativado se o modal tem foco.
+        // O foco já indica o estado.
+        if (event.key === 'Enter') {
+            addProductFromModal();
+            event.preventDefault();
+            console.log("[ACTION] Confirmar Quantidade (Enter) triggered from Modal Listener."); // <<< NOVO LOG
+        } else if (event.key === 'Escape') {
+            closeQuantityModal();
+            event.preventDefault();
+            event.stopPropagation(); // Garante que o Esc não propague
+            console.log("[ACTION] Fechar Modal Quantidade (Esc) triggered from Modal Listener."); // <<< NOVO LOG
         }
     });
 
@@ -1408,7 +1698,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("[ACTION] Finalizar Venda (Ctrl+Enter) triggered.");
             }
             if (event.ctrlKey && event.key === 'd') {
-                applyDiscount();
+                openDiscountModal();
                 event.preventDefault();
                 console.log("[ACTION] Aplicar Desconto (Ctrl+D) triggered.");
             }
@@ -1418,7 +1708,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.stopPropagation();
                 console.log("[ACTION] Cancelar Venda (Esc) triggered from ADDING_PRODUCTS.");
             }
-
         } else if (currentStateAtKeydown === 'PAYMENT_MODE') {
             console.log("[KEYDOWN] Handling in PAYMENT_MODE mode.");
             if (event.key >= '1' && event.key <= '4') {
@@ -1439,9 +1728,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("[ACTION] Cancelar Venda (Esc) triggered from PAYMENT_MODE.");
             }
 
-        } else if (currentStateAtKeydown === 'QUANTITY_INPUT_MODE') {
-            console.log("[KEYDOWN] Handling in QUANTITY_INPUT_MODE mode. (No generic preventDefault)");
-            // A lógica de Enter/Esc é no listener específico do modal
         } else if (currentStateAtKeydown === 'PIX_MODAL_MODE') {
             console.log("[KEYDOWN] Handling in PIX_MODAL_MODE mode.");
             if (event.key === 'Enter') {
@@ -1458,6 +1744,19 @@ document.addEventListener('DOMContentLoaded', function() {
                  event.preventDefault();
                  console.log("[ACTION] Copiar PIX Code (Ctrl/Alt+C) triggered.");
             }
+        } else if (currentStateAtKeydown === 'DISCOUNT_MODE') {
+            console.log("[KEYDOWN] Handling in DISCOUNT_MODE mode.");
+            if (event.key === 'Enter') {
+                discountConfirmButton.click();
+                event.preventDefault();
+                console.log("[ACTION] Confirmar Desconto (Enter) triggered.");
+            } else if (event.key === 'Escape') {
+                cancelDiscount();
+                event.preventDefault();
+                event.stopPropagation();
+                console.log("[ACTION] Cancelar Desconto (Esc) triggered.");
+            }
+            // Permite digitação nos campos de input do modal
         } else if (currentStateAtKeydown === 'CRYPTO_MODAL_MODE') {
             console.log("[KEYDOWN] Handling in CRYPTO_MODAL_MODE mode.");
             console.log("[KEYDOWN] Handling in CRYPTO_MODAL_MODE mode.");
@@ -1503,11 +1802,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 event.preventDefault();
                 event.stopPropagation();
                 console.log("[ACTION] Nova Venda (Alt+N / Esc) triggered.");
+            } else if (event.ctrlKey && event.key === 'p') { // <<< NOVO: Atalho Ctrl+P para Imprimir
+                printReceipt();
+                event.preventDefault();
+                event.stopPropagation();
+                console.log("[ACTION] Imprimir Comprovante (Ctrl+P) triggered.");
             }
             // Mantenha preventDefault/stopPropagation/return para SALE_COMPLETED_MODE, pois queremos bloquear tudo exceto Nova Venda
             event.preventDefault();
             event.stopPropagation();
             return;
+        }
+
+        if (event.key === 'Enter' && !event.defaultPrevented && currentStateAtKeydown === 'ADDING_PRODUCTS') {
+            if (document.activeElement !== barcodeInput) {
+                focusBarcodeInput();
+                console.log("[ACTION] Enter pressionado, foco direcionado para registrador.");
+                event.preventDefault(); // Opcional, para evitar que o Enter faça outra coisa
+            }
         }
 
         // --- Gerenciamento de Foco Geral ---

@@ -18,7 +18,8 @@
                     <span id="cashier-status" style="margin-left: 20px;">Caixa: <strong id="current-cashier-status">Fechado</strong></span>
                     <button id="btn-open-cashier" class="action-button small" style="margin-left: 10px;">Abrir Caixa</button>
                     <button id="btn-close-cashier" class="action-button secondary small" style="margin-left: 5px; display: none;">Fechar Caixa</button>
-                    <a href="{% url 'estoque_listagem' %}" class="action-button tertiary small" style="margin-left: 5px;">Estoque</a> {# NOVO LINK #}
+                    <a href="{% url 'estoque_listagem' %}" class="action-button tertiary small" style="margin-left: 5px;">Estoque</a>
+                    <a href="{% url 'relatorios_listagem' %}" class="action-button tertiary small" style="margin-left: 5px;">Relatórios</a> {# NOVO LINK #}
                     <button id="btn-logout" class="action-button tertiary small" style="margin-left: 5px;">Sair</button>
                 </div>
             </header>
@@ -77,7 +78,9 @@
                 <button id="btn-finalize-sale" class="action-button">Ctrl+Enter - Finalizar Venda</button>
                 <button id="btn-cancel-sale" class="action-button secondary">Esc - Cancelar Venda</button>
                 <button id="btn-apply-discount" class="action-button">Ctrl+D - Desconto</button>
+                {# Botões que aparecem após a venda ser concluída #}
                 <button id="btn-new-sale" class="action-button success" style="display: none;">Alt+N - Nova Venda</button>
+                <button id="btn-print-receipt" class="action-button" style="display: none;">Ctrl + P - Imprimir Comprovante</button> {# NOVO BOTÃO #}
             </div>
 
             <div class="pdv-payment-area" style="display: none;"> {# Inicialmente oculto #}
@@ -224,6 +227,33 @@
          </div>
      </div>
 
+     {# NOVO: Modal para Aplicar Desconto #}
+    <div id="discount-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button discount-close-button">&times;</span>
+            <h2>Aplicar Desconto</h2>
+            <p class="modal-info">Total Bruto da Venda: <strong id="discount-current-total">R$ 0,00</strong></p>
+
+            <div class="modal-form-group">
+                <label for="discount-value">Valor do Desconto (R$):</label>
+                <input type="number" id="discount-value" step="0.01" min="0" value="0.00" class="form-control">
+            </div>
+            <div class="modal-form-group">
+                <label for="discount-percentage">Percentual de Desconto (%):</label>
+                <input type="number" id="discount-percentage" step="0.01" min="0" max="100" value="0.00"
+                       class="form-control">
+            </div>
+
+            <p class="modal-info">Valor Final com Desconto: <strong id="discount-final-total">R$ 0,00</strong></p>
+            <p id="discount-message" class="message"></p>
+
+            <div class="modal-footer-actions">
+                <button id="discount-confirm-button" class="action-button success">Aplicar (Enter)</button>
+                <button id="discount-cancel-button" class="action-button secondary">Cancelar (Esc)</button>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -239,7 +269,7 @@
             loginStatus: "{% url 'api_user_status' %}", // URL para o status do usuário
             openCashier: "{% url 'api_abrir_caixa' %}",
             closeCashier: "{% url 'api_fechar_caixa' %}",
-            // Adicione outras URLs aqui conforme necessário
+            detalhesVenda: "{% url 'api_detalhes_venda' venda_id=0 %}",
         };
     </script>
     <script src="{% static 'vendas/js/qrcode.min.js' %}"></script>

@@ -14,6 +14,13 @@ function getCookie(name) {
             }
         }
     }
+    // NOVO: Fallback para meta tag se o cookie não for encontrado
+    if (!cookieValue) {
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag) {
+            cookieValue = metaTag.getAttribute('content');
+        }
+    }
     return cookieValue;
 }
 
